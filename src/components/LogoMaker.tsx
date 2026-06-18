@@ -32,14 +32,21 @@ const colors = [
   { hex: "#0D9488", name: "Mint" },
 ];
 const layouts = ["image-above", "image-left", "text-only", "stacked", "badge", "minimal"];
-const layoutLabels: Record<string, string> = {
-  "image-above": "Image Above",
-  "image-left": "Image Left",
-  "text-only": "Text Only",
-  stacked: "Stacked",
-  badge: "Badge",
-  minimal: "Minimal",
-};
+
+function LayoutIcon({ layout }: { layout: string }) {
+  const size = 14;
+  if (layout === "image-above")
+    return <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="4" y="2" width="10" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.2"/><rect x="2" y="11" width="14" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" opacity="0.6"/></svg>;
+  if (layout === "image-left")
+    return <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="3" width="5" height="12" rx="1.2" stroke="currentColor" strokeWidth="1.2"/><rect x="9" y="3" width="7" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" opacity="0.6"/><rect x="9" y="10" width="7" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" opacity="0.4"/></svg>;
+  if (layout === "text-only")
+    return <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="4" width="14" height="3" rx="1" stroke="currentColor" strokeWidth="1.2" opacity="0.6"/><rect x="4" y="10" width="10" height="2.5" rx="1" stroke="currentColor" strokeWidth="1.2" opacity="0.35"/></svg>;
+  if (layout === "stacked")
+    return <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="4" y="2" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><rect x="2" y="11" width="14" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" opacity="0.6"/></svg>;
+  if (layout === "badge")
+    return <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="5" width="14" height="8" rx="4" stroke="currentColor" strokeWidth="1.2"/><circle cx="6" cy="9" r="1.5" fill="currentColor" opacity="0.5"/><rect x="9.5" y="7.5" width="5" height="3" rx="0.8" stroke="currentColor" strokeWidth="1" opacity="0.6"/></svg>;
+  return <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="6" cy="6" r="3.5" stroke="currentColor" strokeWidth="1.2"/><rect x="11" y="3" width="5" height="4" rx="0.8" stroke="currentColor" strokeWidth="1.2" opacity="0.6"/><rect x="11" y="10" width="5" height="5" rx="0.8" stroke="currentColor" strokeWidth="1.2" opacity="0.4"/></svg>;
+}
 
 function roundRect(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   c.beginPath();
@@ -290,7 +297,8 @@ export default function LogoMaker() {
               <div className="lm-layout-grid">
                 {layouts.map((l) => (
                   <button key={l} className={`lm-layout-btn${state.layout === l ? " active" : ""}`} onClick={() => update({ layout: l })}>
-                    {layoutLabels[l]}
+                    <span className="lm-layout-btn-icon"><LayoutIcon layout={l} /></span>
+                    <span className="lm-layout-btn-label">{l === "image-above" ? "Above" : l === "image-left" ? "Left" : l === "text-only" ? "Text" : l === "stacked" ? "Stacked" : l === "badge" ? "Badge" : "Minimal"}</span>
                   </button>
                 ))}
               </div>

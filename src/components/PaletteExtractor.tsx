@@ -67,6 +67,9 @@ export default function PaletteExtractor() {
   const [palette, setPalette] = useState<PaletteColor[]>([]);
   const [loading, setLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [copiedAll, setCopiedAll] = useState(false);
+
+  const total = palette.reduce((s, c) => s + c.count, 0);
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -116,6 +119,14 @@ export default function PaletteExtractor() {
     }).catch(() => {});
   };
 
+  const copyAll = () => {
+    const text = palette.map((c) => c.hex).join(", ");
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedAll(true);
+      setTimeout(() => setCopiedAll(false), 2000);
+    }).catch(() => {});
+  };
+
   return (
     <section id="palette-extractor" className="palette-section">
       <div className="palette-wrap">
@@ -154,27 +165,37 @@ export default function PaletteExtractor() {
             )}
 
             {!loading && palette.length > 0 && (
-              <div className="palette-output">
+              <div>
+                <div className="palette-spectrum">
+                  {palette.map((c, i) => (
+                    <div key={i} className="palette-spectrum-bar" style={{ background: c.hex, flex: c.count }} title={`${c.hex} — ${Math.round(c.count / total * 100)}%`} />
+                  ))}
+                </div>
                 <div className="palette-swatches">
                   {palette.map((c, i) => (
-                    <div key={i} className="palette-swatch-wrap">
-                      <div className="palette-swatch" style={{ background: c.hex }} onClick={() => copyHex(c.hex, i)} title="Click to copy">
+                    <div key={i} className="palette-swatch-wrap" onClick={() => copyHex(c.hex, i)}>
+                      <div className="palette-swatch" style={{ background: c.hex }}>
                         {copiedIndex === i && <span className="palette-copied">Copied!</span>}
                       </div>
                       <div className="palette-swatch-info">
                         <span className="palette-swatch-hex">{c.hex}</span>
                         <span className="palette-swatch-rgb">{c.rgb.join(", ")}</span>
                       </div>
+                      <span className="palette-swatch-pct">{Math.round(c.count / total * 100)}%</span>
                     </div>
                   ))}
                 </div>
-                <p className="palette-hint">Click a color swatch to copy its hex code.</p>
+                <div className="palette-copy-all-wrap">
+                  <button className={`palette-copy-all${copiedAll ? " copied" : ""}`} onClick={copyAll}>
+                    {copiedAll ? "Copied!" : "Copy all hex codes"}
+                  </button>
+                </div>
               </div>
             )}
 
             {!loading && !imageSrc && (
               <div className="palette-empty">
-                <span className="palette-empty-icon">🎨</span>
+                <div className="palette-empty-visual">🎨</div>
                 <h3>No palette yet</h3>
                 <p>Upload an image to extract its brand colors</p>
               </div>
@@ -182,7 +203,7 @@ export default function PaletteExtractor() {
 
             {!loading && imageSrc && palette.length === 0 && (
               <div className="palette-empty">
-                <span className="palette-empty-icon">⚠️</span>
+                <div className="palette-empty-visual">!</div>
                 <h3>Could not extract</h3>
                 <p>Try a different image with more color variety</p>
               </div>
