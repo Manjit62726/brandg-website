@@ -30,7 +30,7 @@ export default function Footer() {
             <li><a href="#team">Our Team</a></li>
             <li><a href="#clients">Clients</a></li>
             <li><a href="#process">Process</a></li>
-            <li><a href="#logo-maker">Free Logo Maker</a></li>
+            <li><a href="/tools/logo-maker">Free Logo Maker</a></li>
             <li><a href="#contact">Contact</a></li>
           </ul>
         </div>

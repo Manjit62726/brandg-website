@@ -2,7 +2,6 @@ import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
 import About from "@/components/About";
 import Services from "@/components/Services";
-import LogoMaker from "@/components/LogoMaker";
 import Process from "@/components/Process";
 import Clients from "@/components/Clients";
 import Team from "@/components/Team";
@@ -18,7 +17,6 @@ export default function Home() {
       <Hero />
       <About />
       <Services />
-      <LogoMaker />
       <Process />
       <Clients />
       <Team />
