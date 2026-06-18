@@ -24,6 +24,7 @@ export default function Nav() {
           <li><a href="#about">About</a></li>
           <li><a href="#services">Services</a></li>
           <li><a href="#logo-maker">Logo Maker</a></li>
+          <li><a href="/tools/palette">Palette</a></li>
           <li><a href="#team">Team</a></li>
           <li><a href="#contact" className="nav-cta">Get Started</a></li>
         </ul>
@@ -37,6 +38,7 @@ export default function Nav() {
         <a href="#about" onClick={close}>About</a>
         <a href="#services" onClick={close}>Services</a>
         <a href="#logo-maker" onClick={close}>Logo Maker</a>
+        <a href="/tools/palette" onClick={close}>Palette</a>
         <a href="#team" onClick={close}>Team</a>
         <a href="#contact" onClick={close}>Get Started</a>
       </div>
