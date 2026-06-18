@@ -76,9 +76,9 @@ export default function AdminDashboard() {
   ];
 
   const actions = [
-    { href: "/admin/contacts", icon: "✉", label: "Contacts", desc: `${total} submission${total !== 1 ? "s" : ""}`, color: "#0F766E" },
-    { href: "/admin/services", icon: "⚙", label: "Services", desc: "6 service listings", color: "#D97706" },
-    { href: "/", icon: "→", label: "View Site", desc: "Open public website", color: "#4F46E5", external: true },
+    { href: "/admin/contacts", icon: "✉", label: "Contacts", desc: `${total} submission${total !== 1 ? "s" : ""}`, color: "#2563EB" },
+    { href: "/admin/services", icon: "⚙", label: "Services", desc: "6 service listings", color: "#16A34A" },
+    { href: "/", icon: "→", label: "View Site", desc: "Open public website", color: "#2563EB", external: true },
   ];
 
   return (
@@ -99,7 +99,7 @@ export default function AdminDashboard() {
       <div className="dash-section" style={{ marginBottom: "1rem" }}>
         <div className="dash-section-head">
           <div className="dash-section-head-left">
-            <span className="dash-section-dot" style={{ background: "#D97706" }} />
+            <span className="dash-section-dot" style={{ background: "#16A34A" }} />
             <h3 className="dash-section-title">BrandG Contact</h3>
           </div>
           <Link href="/admin/contacts" className="dash-section-link">Manage →</Link>
@@ -144,7 +144,7 @@ export default function AdminDashboard() {
       <div className="dash-section">
         <div className="dash-section-head">
           <div className="dash-section-head-left">
-            <span className="dash-section-dot" style={{ background: "#0F766E" }} />
+            <span className="dash-section-dot" style={{ background: "#2563EB" }} />
             <h3 className="dash-section-title">Recent Contacts</h3>
           </div>
           <Link href="/admin/contacts" className="dash-section-link">View all →</Link>
@@ -169,7 +169,7 @@ export default function AdminDashboard() {
             <div className="dash-rows">
               {recent.map((c) => (
                 <div key={c.id} className="dash-row">
-                  <div className="dash-row-av" style={{ background: "linear-gradient(135deg, #0F766E, #D97706)" }}>
+                  <div className="dash-row-av" style={{ background: "linear-gradient(135deg, #2563EB, #16A34A)" }}>
                     {c.first_name?.[0]}{c.last_name?.[0]}
                   </div>
                   <div className="dash-row-body">
