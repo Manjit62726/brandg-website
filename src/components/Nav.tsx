@@ -28,6 +28,7 @@ export default function Nav() {
             <div className="nav-dropdown-menu">
               <a href="/tools/logo-maker">Logo Maker</a>
               <a href="/tools/palette">Palette</a>
+              <a href="/tools/background-remover">Bg Remover</a>
             </div>
           </li>
           <li><a href="/#team">Team</a></li>
@@ -44,6 +45,7 @@ export default function Nav() {
         <a href="/#services" onClick={close}>Services</a>
         <a href="/tools/logo-maker" onClick={close}>Logo Maker</a>
         <a href="/tools/palette" onClick={close}>Palette</a>
+        <a href="/tools/background-remover" onClick={close}>Bg Remover</a>
         <a href="/#team" onClick={close}>Team</a>
         <a href="/#contact" onClick={close}>Contact</a>
       </div>
