@@ -2,9 +2,9 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { LogoElement, LogoProject, CanvasViewport, CanvasSettings, Toast, CANVAS_PRESETS, BG_PRESETS, DEFAULT_FONTS } from "./types";
-import { genId, createTextElement, createShapeElement, createIconElement, saveProjects, loadProjects, clamp, deepCloneProject, snapValue, getAlignedGuides } from "./utils";
+import { genId, createTextElement, createShapeElement, createIconElement, saveProjects, loadProjects, clamp, deepCloneProject, snapValue, getAlignedGuides, distributeElements } from "./utils";
 import { getIconPaths, getIconPath } from "./icons";
-import { TEMPLATES } from "./templates";
+import { TEMPLATES, renderTemplateSVG } from "./templates";
 
 const DEFAULT_PROJECT: LogoProject = {
   id: genId(), name: "Untitled", elements: [],
@@ -329,6 +329,18 @@ export default function LogoEditorAdvanced() {
   const alignToCanvas = useCallback((dir: "left" | "center" | "right" | "top" | "middle" | "bottom") => {
     if (selectedIds.length === 0) return;
     updateProject((p) => { for (const id of selectedIds) { const el = p.elements.find((e) => e.id === id); if (!el) continue; if (dir === "left") el.x = 0; else if (dir === "center") el.x = (p.canvasWidth - el.width) / 2; else if (dir === "right") el.x = p.canvasWidth - el.width; else if (dir === "top") el.y = 0; else if (dir === "middle") el.y = (p.canvasHeight - el.height) / 2; else if (dir === "bottom") el.y = p.canvasHeight - el.height; } });
+  }, [selectedIds, updateProject]);
+
+  const distribute = useCallback((dir: "horizontal" | "vertical") => {
+    if (selectedIds.length < 3) return;
+    updateProject((p) => {
+      const els = p.elements.filter((e) => selectedIds.includes(e.id));
+      const positions = distributeElements(els, dir);
+      for (const el of p.elements) {
+        const pos = positions[el.id];
+        if (pos) { if (pos.x !== undefined) el.x = pos.x; if (pos.y !== undefined) el.y = pos.y; }
+      }
+    });
   }, [selectedIds, updateProject]);
 
   const lockSelected = useCallback(() => {
@@ -684,6 +696,12 @@ export default function LogoEditorAdvanced() {
                     <button className="le-tool-btn" onClick={() => alignElements("bottom")} title="Align Bottom"><IconAlignBottom /></button>
                     <span className="le-tool-sep" /></>
                 )}
+                {selectedIds.length >= 3 && (
+                  <><span className="le-tool-label">Distribute:</span>
+                    <button className="le-tool-btn" onClick={() => distribute("horizontal")} title="Distribute Horizontally">↔</button>
+                    <button className="le-tool-btn" onClick={() => distribute("vertical")} title="Distribute Vertically">↕</button>
+                    <span className="le-tool-sep" /></>
+                )}
                 <span className="le-tool-label">Canvas:</span>
                 <button className="le-tool-btn" onClick={() => alignToCanvas("center")} title="Center Horizontally"><IconAlignCenter /></button>
                 <button className="le-tool-btn" onClick={() => alignToCanvas("middle")} title="Center Vertically"><IconAlignMiddle /></button>
@@ -912,15 +930,9 @@ export default function LogoEditorAdvanced() {
               </div>
               <div className="le-modal-body">
                 <div className="le-tpl-grid">
-                  {filteredTemplates.map((tpl) => (
+                    {filteredTemplates.map((tpl) => (
                     <div key={tpl.id} className="le-tpl-card" onClick={() => loadTemplate(tpl)}>
-                      <div className="le-tpl-preview" style={{ background: tpl.canvasBackground }}>
-                        {tpl.elements.slice(0, 3).map((el, i) => (
-                          <div key={i} className="le-tpl-el" style={{ position: "absolute", left: `${(el.x / tpl.canvasWidth) * 100}%`, top: `${(el.y / tpl.canvasHeight) * 100}%`, width: `${(el.width / tpl.canvasWidth) * 100}%`, height: `${(el.height / tpl.canvasHeight) * 100}%`, fontSize: el.type === "text" ? `${Math.min(12, (el.fontSize || 32) / 3)}px` : undefined, color: el.fill, fontWeight: el.fontWeight, fontFamily: el.fontFamily, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                            {el.type === "text" ? el.text : el.type === "icon" ? "I" : el.shapeType === "circle" ? "O" : el.shapeType === "rect" ? "[]" : el.shapeType === "line" ? "—" : "*"}
-                          </div>
-                        ))}
-                      </div>
+                      <div className="le-tpl-preview" dangerouslySetInnerHTML={{ __html: renderTemplateSVG(tpl) }} />
                       <span className="le-tpl-name">{tpl.name}</span>
                     </div>
                   ))}
@@ -1107,10 +1119,11 @@ export default function LogoEditorAdvanced() {
 .le-tpl-cat:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.6); }
 .le-tpl-cat.active { background: rgba(37,99,235,0.15); color: #60A5FA; border-color: rgba(37,99,235,0.2); }
 .le-modal-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
-.le-tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+.le-tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
 .le-tpl-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden; cursor: pointer; transition: all 0.2s; }
 .le-tpl-card:hover { border-color: rgba(37,99,235,0.3); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
-.le-tpl-preview { position: relative; height: 80px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.le-tpl-preview { position: relative; height: 90px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #fff; }
+.le-tpl-preview svg { width: 100%; height: 100%; }
 .le-tpl-name { display: block; padding: 8px 10px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.6); }
 .le-tpl-empty { text-align: center; padding: 40px; font-size: 13px; color: rgba(255,255,255,0.2); grid-column: 1 / -1; }
 .le-export-section { display: flex; flex-direction: column; gap: 12px; }

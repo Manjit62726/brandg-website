@@ -64,6 +64,25 @@ export function snapValue(v: number, grid: number): number {
   return Math.round(v / grid) * grid;
 }
 
+export function distributeElements(els: { id: string; x: number; y: number; width: number; height: number }[], dir: "horizontal" | "vertical"): Record<string, { x?: number; y?: number }> {
+  const result: Record<string, { x?: number; y?: number }> = {};
+  if (els.length < 3) return result;
+  if (dir === "horizontal") {
+    const sorted = [...els].sort((a, b) => a.x - b.x);
+    const first = sorted[0], last = sorted[sorted.length - 1];
+    const space = (last.x + last.width - first.x) / (sorted.length - 1);
+    sorted.forEach((el, i) => { result[el.id] = { x: first.x + space * i - (sorted.indexOf(el) === 0 ? 0 : 0) }; });
+    // Adjust: set x directly
+    sorted.forEach((el, i) => { result[el.id] = { x: first.x + space * i }; });
+  } else {
+    const sorted = [...els].sort((a, b) => a.y - b.y);
+    const first = sorted[0], last = sorted[sorted.length - 1];
+    const space = (last.y + last.height - first.y) / (sorted.length - 1);
+    sorted.forEach((el, i) => { result[el.id] = { y: first.y + space * i }; });
+  }
+  return result;
+}
+
 export function getAlignedGuides(
   movingId: string,
   allElements: LogoElement[],
