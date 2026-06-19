@@ -992,7 +992,7 @@ export default function LogoEditorAdvanced() {
 
       {/* ── INLINE STYLES ── */}
       <style>{`
-.le-section { background: linear-gradient(135deg, #0F172A 0%, #1A2A44 100%); padding: 2rem 0; position: relative; min-height: 100vh; }
+.le-section { background: linear-gradient(135deg, #0F172A 0%, #1A2A44 100%); padding: calc(var(--nav-h, 74px) + 1rem) 0 2rem; position: relative; min-height: 100vh; }
 .le-section::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 50% at 30% 20%, rgba(37,99,235,0.05) 0%, transparent 70%), radial-gradient(ellipse 50% 40% at 70% 80%, rgba(22,163,74,0.04) 0%, transparent 70%); pointer-events: none; }
 .le-wrap { max-width: 1440px; margin: 0 auto; padding: 0 1rem; position: relative; z-index: 1; }
 .le-toast { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,0.3); animation: slideIn 0.3s ease; pointer-events: none; }
