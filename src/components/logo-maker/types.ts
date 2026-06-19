@@ -30,6 +30,11 @@ export interface LogoElement {
   shadowOffsetX?: number;
   shadowOffsetY?: number;
 
+  gradientType?: "none" | "linear" | "radial";
+  gradientStart?: string;
+  gradientEnd?: string;
+  gradientAngle?: number;
+
   iconName?: string;
   shapeType?: "rect" | "circle" | "triangle" | "line" | "diamond" | "hexagon" | "star";
 
@@ -54,6 +59,7 @@ export interface CanvasSettings {
   snapToGrid: boolean;
   showRulers: boolean;
   showGuides: boolean;
+  backgroundPreset: string;
 }
 
 export interface TemplateCategory {
@@ -65,6 +71,12 @@ export interface CanvasViewport {
   zoom: number;
   panX: number;
   panY: number;
+}
+
+export interface Toast {
+  id: string;
+  message: string;
+  type: "success" | "info" | "error";
 }
 
 export const DEFAULT_FONTS = [
@@ -96,4 +108,17 @@ export const CANVAS_PRESETS = [
   { label: "Header (1920×400)", w: 1920, h: 400 },
   { label: "Square (500×500)", w: 500, h: 500 },
   { label: "Custom", w: 600, h: 300 },
+];
+
+export const BG_PRESETS = [
+  { id: "solid-white", label: "White", bg: "#FFFFFF" },
+  { id: "solid-light", label: "Light Gray", bg: "#F1F5F9" },
+  { id: "solid-dark", label: "Dark", bg: "#1C1C1E" },
+  { id: "solid-black", label: "Black", bg: "#000000" },
+  { id: "transparent", label: "Transparent", bg: "transparent" },
+  { id: "gradient-blue", label: "Blue Gradient", bg: "linear-gradient(135deg, #2563EB, #1E40AF)" },
+  { id: "gradient-green", label: "Green Gradient", bg: "linear-gradient(135deg, #16A34A, #15803D)" },
+  { id: "gradient-sunset", label: "Sunset", bg: "linear-gradient(135deg, #F59E0B, #DC2626)" },
+  { id: "gradient-purple", label: "Purple", bg: "linear-gradient(135deg, #7C3AED, #4C1D95)" },
+  { id: "gradient-ocean", label: "Ocean", bg: "linear-gradient(135deg, #0891B2, #0F766E)" },
 ];
