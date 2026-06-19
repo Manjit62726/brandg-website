@@ -11,6 +11,9 @@ export default function LogoMakerPage() {
       <LogoEditorAdvanced />
       <Footer />
       <BackToTop />
+      <style>{`
+        .nav-links { flex-direction: row !important; flex-wrap: nowrap !important; gap: 2px !important; }
+      `}</style>
     </>
   );
 }
