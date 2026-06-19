@@ -7,6 +7,7 @@ import RevealObserver from "@/components/RevealObserver";
 export default function LogoMakerPage() {
   return (
     <>
+      <Nav />
       <LogoEditorAdvanced />
       <Footer />
       <BackToTop />
