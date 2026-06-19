@@ -32,37 +32,79 @@ function clusterColors(samples: number[][], k: number): number[][] {
 
 function autoRemoveBg(imageData: ImageData, threshold: number, featherPx: number): Uint8Array {
   const { data, width, height } = imageData;
-  const mask = new Uint8Array(width * height);
-  const edgeStep = Math.max(1, Math.floor(Math.min(width, height) / 40));
+  const step = Math.max(1, Math.floor(Math.min(width, height) / 60));
   const edgeSamples: number[][] = [];
-  for (let x = 0; x < width; x += edgeStep) {
+  for (let x = 0; x < width; x += step) {
     const ti = x * 4, bi = ((height-1)*width + x)*4;
     edgeSamples.push([data[ti], data[ti+1], data[ti+2]]);
     edgeSamples.push([data[bi], data[bi+1], data[bi+2]]);
   }
-  for (let y = 0; y < height; y += edgeStep) {
+  for (let y = 0; y < height; y += step) {
     const li = y*width*4, ri = (y*width+width-1)*4;
     edgeSamples.push([data[li], data[li+1], data[li+2]]);
     edgeSamples.push([data[ri], data[ri+1], data[ri+2]]);
   }
   const bgColors = clusterColors(edgeSamples, 3);
 
-  for (let i = 0; i < width * height; i++) {
+  // Flood fill BFS from edges — only expand into pixels matching bg colors
+  const visited = new Uint8Array(width * height);
+  const isBg = new Uint8Array(width * height);
+  const queue: number[] = [];
+  for (let x = 0; x < width; x++) { queue.push(x); queue.push((height-1)*width + x); }
+  for (let y = 1; y < height-1; y++) { queue.push(y*width); queue.push(y*width + width-1); }
+
+  let head = 0;
+  while (head < queue.length) {
+    const i = queue[head++];
+    if (visited[i]) continue;
+    visited[i] = 1;
     const idx = i * 4;
     const px = [data[idx], data[idx+1], data[idx+2]];
-    let isBg = false;
-    for (const bg of bgColors) { if (colorDist(px, bg) < threshold) { isBg = true; break; } }
-    mask[i] = isBg ? 0 : 255;
+    let matches = false;
+    for (const bg of bgColors) { if (colorDist(px, bg) < threshold) { matches = true; break; } }
+    if (matches) {
+      isBg[i] = 1;
+      const y = Math.floor(i / width), x = i % width;
+      if (x > 0 && !visited[i-1]) queue.push(i-1);
+      if (x < width-1 && !visited[i+1]) queue.push(i+1);
+      if (y > 0 && !visited[i-width]) queue.push(i-width);
+      if (y < height-1 && !visited[i+width]) queue.push(i+width);
+    }
   }
 
-  // Feather edges
+  // Remove small foreground islands (speckle removal)
+  const fgVisited = new Uint8Array(width * height);
+  for (let i = 0; i < width * height; i++) {
+    if (isBg[i] || fgVisited[i]) continue;
+    const island: number[] = [];
+    const fq: number[] = [i];
+    fgVisited[i] = 1;
+    let fhead = 0;
+    while (fhead < fq.length) {
+      const ci = fq[fhead++];
+      island.push(ci);
+      const y = Math.floor(ci / width), x = ci % width;
+      for (const [dx, dy] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+        const ni = ny * width + nx;
+        if (!isBg[ni] && !fgVisited[ni]) { fgVisited[ni] = 1; fq.push(ni); }
+      }
+    }
+    if (island.length < 50) island.forEach((ci) => { isBg[ci] = 1; });
+  }
+
+  const mask = new Uint8Array(width * height);
+  for (let i = 0; i < width * height; i++) mask[i] = isBg[i] ? 0 : 255;
+
+  // Feather edges using distance transform
   if (featherPx > 0) {
     const feathered = new Uint8Array(mask);
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const i = y * width + x;
         if (mask[i] === 255) continue;
-        let nearFg = false, minDist = Infinity;
+        let minDist = featherPx + 1;
         for (let dy = -featherPx; dy <= featherPx; dy++) {
           for (let dx = -featherPx; dx <= featherPx; dx++) {
             const nx = x + dx, ny = y + dy;
@@ -70,16 +112,43 @@ function autoRemoveBg(imageData: ImageData, threshold: number, featherPx: number
             if (mask[ny * width + nx] === 255) {
               const d = Math.sqrt(dx*dx + dy*dy);
               if (d < minDist) minDist = d;
-              nearFg = true;
             }
           }
         }
-        if (nearFg) feathered[i] = Math.round(Math.min(255, (minDist / featherPx) * 255));
+        if (minDist <= featherPx) feathered[i] = Math.round((minDist / featherPx) * 255);
       }
     }
     return feathered;
   }
   return mask;
+}
+
+function magicWand(imageData: ImageData, cx: number, cy: number, threshold: number): Uint8Array {
+  const { data, width, height } = imageData;
+  const i = cy * width + cx;
+  const idx = i * 4;
+  const target = [data[idx], data[idx+1], data[idx+2]];
+  const visited = new Uint8Array(width * height);
+  const selected = new Uint8Array(width * height);
+  const queue: number[] = [i];
+  visited[i] = 1;
+  let head = 0;
+  while (head < queue.length) {
+    const ci = queue[head++];
+    selected[ci] = 1;
+    const cy2 = Math.floor(ci / width), cx2 = ci % width;
+    for (const [dx, dy] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+      const nx = cx2 + dx, ny = cy2 + dy;
+      if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+      const ni = ny * width + nx;
+      if (visited[ni]) continue;
+      visited[ni] = 1;
+      const nidx = ni * 4;
+      const np = [data[nidx], data[nidx+1], data[nidx+2]];
+      if (colorDist(np, target) < threshold) queue.push(ni);
+    }
+  }
+  return selected;
 }
 
 export default function BackgroundRemover() {
@@ -90,7 +159,7 @@ export default function BackgroundRemover() {
   const maskRef = useRef<Uint8Array | null>(null);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<"auto" | "keep" | "remove">("auto");
+  const [mode, setMode] = useState<"auto" | "wand" | "keep" | "remove">("auto");
   const [brushSize, setBrushSize] = useState(30);
   const [threshold, setThreshold] = useState(35);
   const [feather, setFeather] = useState(8);
@@ -275,6 +344,18 @@ export default function BackgroundRemover() {
     if (e.button === 1 || e.button === 0) {
       const pos = getCanvasPos(e.clientX, e.clientY);
       if (!pos || pos.x < 0 || pos.x >= imageDims.w || pos.y < 0 || pos.y >= imageDims.h) return;
+      if (mode === "wand") {
+        const orig = originalDataRef.current;
+        if (!orig) return;
+        pushUndo();
+        const selection = magicWand(orig, Math.round(pos.x), Math.round(pos.y), threshold);
+        const mask = maskRef.current;
+        if (!mask) return;
+        for (let i = 0; i < mask.length; i++) { if (selection[i]) mask[i] = 0; }
+        renderResult();
+        toast("Magic wand selection applied", "info");
+        return;
+      }
       if (mode === "auto") { setIsPanning(true); setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y }); isPanningRef.current = true; return; }
       pushUndo();
       setIsDrawing(true);
@@ -327,9 +408,10 @@ export default function BackgroundRemover() {
   };
 
   const modeBtns = [
-    { key: "auto" as const, label: "Auto", icon: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" },
-    { key: "keep" as const, label: "Keep Brush", icon: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" },
-    { key: "remove" as const, label: "Remove Brush", icon: "M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z" },
+    { key: "auto" as const, label: "Auto", icon: "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" },
+    { key: "wand" as const, label: "Wand", icon: "M14.5 2L12 7l-2.5 5h5L17 7l2.5-5h-5zM7 10l-2.5 5L2 20h5l2.5-5L12 10H7z" },
+    { key: "keep" as const, label: "Keep", icon: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" },
+    { key: "remove" as const, label: "Remove", icon: "M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z" },
   ];
 
   return (
@@ -358,7 +440,7 @@ export default function BackgroundRemover() {
               <>
                 <div
                   className="br-canvas-viewport"
-                  style={{ cursor: mode === "auto" ? (isPanning ? "grabbing" : "grab") : "none" }}
+                  style={{ cursor: mode === "auto" ? (isPanning ? "grabbing" : "grab") : mode === "wand" ? "crosshair" : "none" }}
                 >
                   {loading && <div className="br-loading">Loading...</div>}
                   <div className="br-canvas-stage" style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: "0 0" }}>
@@ -368,7 +450,7 @@ export default function BackgroundRemover() {
                       onMouseUp={handleCanvasMouseUp}
                       onMouseLeave={handleCanvasMouseUp}
                     />
-                    {mode !== "auto" && cursorPos && cursorPos.x >= 0 && cursorPos.x < imageDims.w && cursorPos.y >= 0 && cursorPos.y < imageDims.h && (
+                    {mode !== "auto" && mode !== "wand" && cursorPos && cursorPos.x >= 0 && cursorPos.x < imageDims.w && cursorPos.y >= 0 && cursorPos.y < imageDims.h && (
                       <div className="br-brush-cursor" style={{
                         width: brushSize * zoom,
                         height: brushSize * zoom,
@@ -401,7 +483,7 @@ export default function BackgroundRemover() {
             {/* Mode selector */}
             <div className="br-panel-group">
               <span className="br-panel-label">Mode</span>
-              <div className="br-mode-grid">
+              <div className="br-mode-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr 1fr" }}>
                 {modeBtns.map((m) => (
                   <button key={m.key} className={`br-mode-btn${mode === m.key ? " active" : ""}`} onClick={() => setMode(m.key)}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill={mode === m.key ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d={m.icon} /></svg>
@@ -432,8 +514,20 @@ export default function BackgroundRemover() {
               </div>
             )}
 
+            {mode === "wand" && (
+              <div className="br-panel-group">
+                <span className="br-panel-label">Magic Wand</span>
+                <div className="br-slider-row">
+                  <span className="br-slider-lbl">Tolerance</span>
+                  <input type="range" min="5" max="80" value={threshold} onChange={(e) => setThreshold(Number(e.target.value))} className="br-slider" />
+                  <span className="br-slider-val">{threshold}</span>
+                </div>
+                <div className="br-mode-hint">Click on the image to select similar-colored areas as background</div>
+              </div>
+            )}
+
             {/* Brush settings */}
-            {mode !== "auto" && (
+            {(mode === "keep" || mode === "remove") && (
               <div className="br-panel-group">
                 <span className="br-panel-label">Brush</span>
                 <div className="br-slider-row">
