@@ -1,16 +1,16 @@
 import { LogoProject } from "./types";
-import { genId } from "./utils";
+import { genId, createTextElement, createShapeElement, createIconElement } from "./utils";
 
 let tid = 0;
-function t(text: string, x: number, y: number, fontSize = 32, fill = "#0B192C", fontFamily = "Outfit"): ReturnType<typeof import("./types").createTextElement> {
+function t(text: string, x: number, y: number, fontSize = 32, fill = "#0B192C", fontFamily = "Outfit"): ReturnType<typeof import("./utils").createTextElement> {
   return { id: genId(), type: "text", x, y, width: 280, height: fontSize + 8, rotation: 0, locked: false, visible: true, opacity: 1, zIndex: tid++, text, fontFamily, fontSize, fontWeight: 800, fontStyle: "normal", textAlign: "center", letterSpacing: 0, lineHeight: 1.2, textDecoration: "none", fill };
 }
 
-function s(shapeType: string, x: number, y: number, w: number, h: number, fill: string, zIndex: number): ReturnType<typeof import("./types").createShapeElement> {
+function s(shapeType: string, x: number, y: number, w: number, h: number, fill: string, zIndex: number): ReturnType<typeof import("./utils").createShapeElement> {
   return { id: genId(), type: "shape", x, y, width: w, height: h, rotation: 0, locked: false, visible: true, opacity: 1, zIndex, shapeType: shapeType as any, fill, stroke: "none", strokeWidth: 0 };
 }
 
-function ic(iconName: string, x: number, y: number, size: number, fill: string, zIndex: number): ReturnType<typeof import("./types").createIconElement> {
+function ic(iconName: string, x: number, y: number, size: number, fill: string, zIndex: number): ReturnType<typeof import("./utils").createIconElement> {
   return { id: genId(), type: "icon", x, y, width: size, height: size, rotation: 0, locked: false, visible: true, opacity: 1, zIndex, iconName, fill };
 }
 
