@@ -10,6 +10,7 @@ export interface LogoElement {
   visible: boolean;
   opacity: number;
   zIndex: number;
+  groupId?: string;
 
   text?: string;
   fontFamily?: string;
@@ -33,6 +34,7 @@ export interface LogoElement {
   shapeType?: "rect" | "circle" | "triangle" | "line" | "diamond" | "hexagon" | "star";
 
   imageSrc?: string;
+  blur?: number;
 }
 
 export interface LogoProject {
@@ -44,6 +46,14 @@ export interface LogoProject {
   canvasBackground: string;
   createdAt: number;
   updatedAt: number;
+}
+
+export interface CanvasSettings {
+  showGrid: boolean;
+  gridSize: number;
+  snapToGrid: boolean;
+  showRulers: boolean;
+  showGuides: boolean;
 }
 
 export interface TemplateCategory {
@@ -61,6 +71,7 @@ export const DEFAULT_FONTS = [
   "Outfit", "Inter", "Georgia", "Playfair Display", "Arial Black",
   "Courier New", "Trebuchet MS", "Impact", "Garamond", "Roboto",
   "Montserrat", "Poppins", "Merriweather", "Space Grotesk",
+  "Oswald", "Lora", "Nunito", "DM Sans",
 ];
 
 export const SHAPES = ["rect", "circle", "triangle", "line", "diamond", "hexagon", "star"] as const;
@@ -74,4 +85,15 @@ export const TEMPLATE_CATEGORIES: TemplateCategory[] = [
   { name: "education", label: "Education" },
   { name: "health", label: "Health" },
   { name: "sports", label: "Sports" },
+];
+
+export const CANVAS_PRESETS = [
+  { label: "Social Square (1080×1080)", w: 1080, h: 1080 },
+  { label: "Social Story (1080×1920)", w: 1080, h: 1920 },
+  { label: "Banner (1200×628)", w: 1200, h: 628 },
+  { label: "Business Card (1050×600)", w: 1050, h: 600 },
+  { label: "Logo (600×300)", w: 600, h: 300 },
+  { label: "Header (1920×400)", w: 1920, h: 400 },
+  { label: "Square (500×500)", w: 500, h: 500 },
+  { label: "Custom", w: 600, h: 300 },
 ];
